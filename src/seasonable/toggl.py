@@ -6,7 +6,7 @@ from . import client as clientlib
 
 @attr.s(frozen=True, auto_attribs=True)
 class Toggl:
-    _token: str
+    _user: str
 
     def update_request(self, method, api, **kwargs):
         kwargs["auth"] = (self._token, 'api_token')
