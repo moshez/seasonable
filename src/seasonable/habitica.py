@@ -1,5 +1,7 @@
 from __future__ import annotations
 import attr
+import collections
+import datetime
 import enum
 import ipywidgets
 
@@ -101,3 +103,13 @@ def label_button_gridbox(client, habits):
         )
     _make_grid_template(builder, len(habits), children=list(get_children()))
     return builder.ui_grid
+
+def get_clicks_by_date(client, name):
+    tasks = client.get("/api/v3/tasks/user")
+    [relevant] = [item for item in tasks["data"] if item["text"] == name]
+    history = relevant["history"]
+    clicks = [datetime.datetime.fromtimestamp(item["date"]/1000) for item in history]
+    by_date = collections.defaultdict(list)
+    for click in clicks:
+        by_date[click.date()].append(click)
+    return by_date
