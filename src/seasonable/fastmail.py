@@ -78,7 +78,7 @@ def get_threads(client, account_id, mailbox_id):
                 "name": "Thread/get",
                 "path": "/list/*/emailIds"
             },
-            "properties": [ "from", "receivedAt", "subject", "bodyValues", "threadId"]
+            "properties": [ "from", "receivedAt", "subject", "bodyValues", "threadId", "mailboxIds"]
     }, "t3" ]
     ]
     results = jmap_call(client, get_emails_query)
