@@ -28,7 +28,7 @@ def get_account_id(client):
     account_id = session['primaryAccounts']['urn:ietf:params:jmap:mail']
     return account_id
 
-def get_inbox_id(client, account_id):
+def get_id_by_role(client, account_id):
     query=[[
         "Mailbox/get",
         dict(
@@ -38,9 +38,8 @@ def get_inbox_id(client, account_id):
         0,
     ]]
     mbox = jmap_call(client, query)
-    [inbox] = [folder for folder in mbox["methodResponses"][0][1]["list"] if folder["role"]=="inbox"]
-    mailbox_id = inbox["id"]
-    return mailbox_id
+    roles = {folder["role"]: folder["id"] for folder in mbox["methodResponses"][0][1]["list"] if folder["role"] is not None}
+    return roles
 
 def get_threads(client, account_id, mailbox_id):
     get_emails_query = [
@@ -88,3 +87,20 @@ def get_threads(client, account_id, mailbox_id):
     for email in email_list:
         by_thread[email["threadId"]].append(email)
     return list(by_thread.values())
+
+def move_email(client, *, account_id, email_id, mailbox_id):
+    query=[
+        [
+            "Email/set",
+            dict(
+                accountId=account_id,
+                update={
+                    email_id: dict(
+                        mailboxIds={mailbox_id: True}
+                ),
+            }
+        ),
+        0,
+    ]
+    ]
+    jmap_call(client, query)
