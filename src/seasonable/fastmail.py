@@ -1,4 +1,5 @@
 # Inspired by https://jvns.ca/blog/2020/08/18/implementing--focus-and-reply--for-fastmail/
+from __future__ import annotations
 import attr
 import collections
 
@@ -104,3 +105,41 @@ def move_email(client, *, account_id, email_id, mailbox_id):
     ]
     ]
     jmap_call(client, query)
+    
+@attr.frozen
+class Email:
+    id: str
+    sender: str
+    subject: str
+
+def email_from_thread(thread):
+    last_email = thread[-1]
+    sender_details = last_email["from"][0]
+    name = sender_details.get("name", "")
+    email = sender_details["email"]
+    sender = f"{name} <{email}>"
+    subject = last_email["subject"]
+    id = last_email["id"]
+    return Email(id=id, sender=sender, subject=subject)
+
+
+@attr.frozen
+class Account:
+    account_id: str
+    roles: Dict[str, str]
+    client: Any
+        
+    @classmethod
+    def from_client(cls, fastmail_client):
+        account_id = get_account_id(fastmail_client)
+        roles = get_id_by_role(fastmail_client, account_id)
+        return cls(client=fastmail_client, roles=roles, account_id=account_id)
+
+    def get_inbox(self):
+        mailbox_id = self.roles["inbox"]
+        threads = get_threads(self.client, self.account_id, mailbox_id)
+        emails = [email_from_thread(thread) for thread in threads]
+        return emails
+    
+    def archive(self, email_id):
+        move_email(self.client, account_id=self.account_id, email_id=email_id, mailbox_id=self.roles["archive"])

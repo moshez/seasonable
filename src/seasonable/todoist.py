@@ -29,3 +29,7 @@ def recently_completed_by_label(client, label_name, since):
         if label["id"] in details["labels"]:
             result.append((details, an_event))
     return result
+
+
+def make_task(todoist_client, subject, description):
+    todoist_client.post("rest/v1/tasks", json=dict(content=subject, description=description))
