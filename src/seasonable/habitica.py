@@ -108,8 +108,9 @@ def get_clicks_by_date(client, name):
     tasks = client.get("/api/v3/tasks/user")
     [relevant] = [item for item in tasks["data"] if item["text"] == name]
     history = relevant["history"]
-    clicks = [datetime.datetime.fromtimestamp(item["date"]/1000) for item in history]
+    
+    clicks = [(datetime.datetime.fromtimestamp(item["date"]/1000), item) for item in history]
     by_date = collections.defaultdict(list)
-    for click in clicks:
-        by_date[click.date()].append(click)
+    for when, item in clicks:
+        by_date[when.date()].append(item)
     return by_date
