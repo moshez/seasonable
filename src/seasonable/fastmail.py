@@ -2,6 +2,8 @@
 from __future__ import annotations
 import attr
 import collections
+from seasonable import ui
+import ipywidgets
 
 @attr.s(frozen=True, auto_attribs=True)
 class Fastmail:
@@ -143,3 +145,56 @@ class Account:
     
     def archive(self, email_id):
         move_email(self.client, account_id=self.account_id, email_id=email_id, mailbox_id=self.roles["archive"])
+        
+        
+def _convert_to_task(email):
+    subject = email.subject
+    description="From " + email.sender
+    email_id = email.id
+    print(f"Archiving:\n{subject=}\n{description=}\n{email_id=}")
+    todoist.make_task(todoist_client, subject=subject, description=description)
+    account.archive(email_id)
+        
+def _make_grid_template(builder, length, children):
+    grid_template_rows = " ".join(["auto"] * length)
+    grid_template_columns='80% 20%'
+    grid_template_areas = "".join([
+        f'"label_{i} convert_{i}"\n'
+        for i in range(length)
+    ]) + '"output output"\n'
+    builder.add_widgets(
+        grid=ipywidgets.GridBox(
+            children=children + [builder.ui_output],
+            layout=ipywidgets.Layout(
+                width='50%',
+                grid_template_rows=grid_template_rows,
+                grid_template_columns=grid_template_columns,
+                grid_template_areas=grid_template_areas,
+            ),
+        ),
+    )
+    
+def _make_button(*, idx, email, output):
+    def clicker(button):
+        with output:
+            _convert_to_task(email)
+    button = ipywidgets.Button(
+                description='Convert',
+                layout=ipywidgets.Layout(grid_area=f"convert_{idx}", width="auto"),
+            )
+    button.on_click(clicker)
+    return button
+
+def label_button_gridbox(emails):
+    builder = ui.UIBuilder()
+    builder.add_widgets(output=ipywidgets.Output())
+    def get_children():
+        for i, email in enumerate(emails):
+            yield _make_button(idx=i, email=email, output=builder.ui_output)
+            yield ipywidgets.Label(
+                f"{email.subject[:10]} (from {email.sender})",
+                layout=ipywidgets.Layout(grid_area=f"label_{i}"),
+            )
+    _make_grid_template(builder, len(emails), children=list(get_children()))
+    return builder.ui_grid
+
