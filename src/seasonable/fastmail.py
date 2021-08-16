@@ -2,7 +2,7 @@
 from __future__ import annotations
 import attr
 import collections
-from seasonable import ui
+from seasonable import ui, todoist
 import ipywidgets
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -147,7 +147,7 @@ class Account:
         move_email(self.client, account_id=self.account_id, email_id=email_id, mailbox_id=self.roles["archive"])
         
         
-def _convert_to_task(email, *, todoist, account):
+def _convert_to_task(email, *, todoist_client, account):
     subject = email.subject
     description="From " + email.sender
     email_id = email.id
@@ -174,10 +174,10 @@ def _make_grid_template(builder, length, children):
         ),
     )
     
-def _make_button(*, idx, email, todoist, account, output):
+def _make_button(*, idx, email, todoist_client, account, output):
     def clicker(button):
         with output:
-            _convert_to_task(email, todoist=todoist, account=account)
+            _convert_to_task(email, todoist_client=todoist_client, account=account)
     button = ipywidgets.Button(
                 description='Convert',
                 layout=ipywidgets.Layout(grid_area=f"convert_{idx}", width="auto"),
@@ -185,16 +185,15 @@ def _make_button(*, idx, email, todoist, account, output):
     button.on_click(clicker)
     return button
 
-def label_button_gridbox(emails, todoist, account):
+def label_button_gridbox(emails, todoist_client, account):
     builder = ui.UIBuilder()
     builder.add_widgets(output=ipywidgets.Output())
     def get_children():
         for i, email in enumerate(emails):
-            yield _make_button(idx=i, email=email, todoist=todoist, account=account, output=builder.ui_output)
+            yield _make_button(idx=i, email=email, todoist_client=todoist_client, account=account, output=builder.ui_output)
             yield ipywidgets.Label(
                 f"{email.subject[:10]} (from {email.sender})",
                 layout=ipywidgets.Layout(grid_area=f"label_{i}"),
             )
     _make_grid_template(builder, len(emails), children=list(get_children()))
     return builder.ui_grid
-
