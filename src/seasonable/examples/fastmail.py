@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from .. import fastmail, ui, todoist
+import seasonable.examples.todoist
+from .. import examples
 import attr
 import collections
 import ipywidgets
@@ -127,7 +129,7 @@ def _convert_to_task(email, *, todoist_client, account):
     description="From " + email.sender
     email_id = email.id
     print(f"Archiving:\n{subject=}\n{description=}\n{email_id=}")
-    todoist.make_task(todoist_client, subject=subject, description=description)
+    examples.todoist.make_task(todoist_client, subject=subject, description=description)
     account.archive(email_id)
         
 def _make_grid_template(builder, length, children):
